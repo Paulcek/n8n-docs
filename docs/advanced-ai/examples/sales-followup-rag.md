@@ -1,59 +1,59 @@
 ---
 contentType: howto
-title: Build a sales follow-up workflow with CRM and RAG
-description: Use n8n to generate personalized sales follow-up messages using CRM data and RAG-powered product knowledge.
+title: Creare un workflow di follow-up commerciale con CRM e RAG
+description: Usa n8n per generare messaggi di follow-up commerciale personalizzati combinando dati CRM e documenti interni tramite RAG.
 ---
 
-# Build a sales follow-up workflow with CRM and RAG
+# Creare un workflow di follow-up commerciale con CRM e RAG
 
-Use n8n to automate personalized sales follow-ups by combining CRM data with internal product knowledge. This workflow triggers when a deal stage changes in your CRM, retrieves customer history and relevant product documents using [RAG](/advanced-ai/rag-in-n8n.md), generates tailored messages for email, WhatsApp, and SMS channels, then records the activity back in your CRM.
+Usa n8n per automatizzare i follow-up commerciali personalizzati combinando i dati del CRM con la documentazione interna sui prodotti. Questo workflow si attiva quando cambia lo stage di una trattativa nel CRM, recupera lo storico del cliente e i documenti di prodotto pertinenti tramite [RAG](/advanced-ai/rag-in-n8n.md), genera messaggi personalizzati per email, WhatsApp e SMS, e infine registra l'attivita nel CRM.
 
 [[ workflowDemo("file:///advanced-ai/examples/sales_followup_rag.json") ]]
 
-## Key features
+## Funzionalita principali
 
-This workflow uses:
+Questo workflow utilizza:
 
-* A [webhook trigger](/integrations/builtin/core-nodes/n8n-nodes-base.webhook.md) to receive CRM deal stage change events (for example, "Contacted" or "Proposal Sent").
-* An [HTTP Request node](/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/index.md) to fetch the customer's CRM history, including previous interactions, products of interest, and sales notes.
-* A [vector store](/advanced-ai/rag-in-n8n.md) query to retrieve relevant internal documents (product sheets, offers, price lists) using RAG.
-* An [AI Agent](/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/index.md) that generates personalized follow-up messages for each communication channel based on the CRM context and retrieved documents.
-* An [IF node](/integrations/builtin/core-nodes/n8n-nodes-base.if.md) to route the generated messages to the appropriate channel: email, WhatsApp Business API, or SMS via Twilio.
-* A final HTTP Request node to record the follow-up activity back in the CRM.
+* Un [webhook trigger](/integrations/builtin/core-nodes/n8n-nodes-base.webhook.md) per ricevere gli eventi di cambio stage dal CRM (ad esempio "Contacted" o "Proposal Sent").
+* Un nodo [HTTP Request](/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/index.md) per recuperare lo storico del cliente dal CRM, incluse interazioni precedenti, prodotti di interesse e note commerciali.
+* Una query al [vector store](/advanced-ai/rag-in-n8n.md) per recuperare documenti interni pertinenti (schede prodotto, offerte, listini) tramite RAG.
+* Un [AI Agent](/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/index.md) che genera messaggi di follow-up personalizzati per ogni canale di comunicazione, basandosi sul contesto CRM e sui documenti recuperati.
+* Un [nodo IF](/integrations/builtin/core-nodes/n8n-nodes-base.if.md) per instradare i messaggi verso il canale appropriato: email, WhatsApp Business API o SMS tramite Twilio.
+* Un nodo HTTP Request finale per registrare l'attivita di follow-up nel CRM.
 
-## Workflow structure
+## Struttura del workflow
 
-The workflow follows six stages:
+Il workflow si articola in sei fasi:
 
-### 1. CRM trigger: DealStageUpdated
+### 1. Trigger CRM: DealStageUpdated
 
-A [Webhook node](/integrations/builtin/core-nodes/n8n-nodes-base.webhook.md) listens for deal stage change events from your CRM. The incoming payload should include:
+Un [nodo Webhook](/integrations/builtin/core-nodes/n8n-nodes-base.webhook.md) ascolta gli eventi di cambio stage provenienti dal CRM. Il payload in ingresso deve includere:
 
-| Field | Description |
+| Campo | Descrizione |
 | --- | --- |
-| `leadId` | The unique identifier for the lead or deal |
-| `stage` | The new deal stage (for example, `Contacted`, `Proposal Sent`) |
-| `preferredChannel` | The follow-up channel: `email`, `whatsapp`, or `sms` |
+| `leadId` | L'identificativo univoco del lead o della trattativa |
+| `stage` | Il nuovo stage della trattativa (ad esempio `Contacted`, `Proposal Sent`) |
+| `preferredChannel` | Il canale di follow-up: `email`, `whatsapp` o `sms` |
 
-### 2. Fetch customer history: GetCustomerHistory
+### 2. Recupero storico cliente: GetCustomerHistory
 
-An [HTTP Request node](/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/index.md) calls your CRM API to retrieve:
+Un nodo [HTTP Request](/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/index.md) chiama l'API del CRM per recuperare:
 
-* Previous interactions and communication history
-* Products the customer has shown interest in
-* Internal sales notes and deal context
+* Le interazioni precedenti e lo storico delle comunicazioni
+* I prodotti per cui il cliente ha mostrato interesse
+* Le note commerciali interne e il contesto della trattativa
 
-### 3. Vector store query: ProductDocsRAG
+### 3. Query al vector store: ProductDocsRAG
 
-A [Vector Store node](/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.vectorstoreinmemory.md) queries your document knowledge base to retrieve relevant product sheets, current offers, and price lists. This uses [RAG](/advanced-ai/rag-in-n8n.md) to ground the AI's responses in your actual product information.
+Un nodo [Vector Store](/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.vectorstoreinmemory.md) interroga la knowledge base documentale per recuperare schede prodotto, offerte in corso e listini pertinenti. Questo sfrutta il [RAG](/advanced-ai/rag-in-n8n.md) per ancorare le risposte dell'AI alle informazioni reali sui prodotti.
 
-/// note | Set up your vector store first
-Before using this workflow, populate your vector store with product documentation, offers, and price lists. Refer to [RAG in n8n](/advanced-ai/rag-in-n8n.md) for instructions on inserting documents into a vector store.
+/// note | Configura prima il vector store
+Prima di utilizzare questo workflow, popola il vector store con la documentazione dei prodotti, le offerte e i listini. Consulta [RAG in n8n](/advanced-ai/rag-in-n8n.md) per le istruzioni su come inserire documenti in un vector store.
 ///
 
-### 4. AI agent: FollowUpWriterAI
+### 4. Agente AI: FollowUpWriterAI
 
-An [AI Agent](/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/index.md) receives the CRM history and retrieved documents, then generates personalized follow-up messages. The agent outputs a structured JSON response:
+Un [AI Agent](/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/index.md) riceve lo storico CRM e i documenti recuperati, quindi genera messaggi di follow-up personalizzati. L'agente produce una risposta JSON strutturata:
 
 ```json
 {
@@ -64,48 +64,48 @@ An [AI Agent](/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain
 }
 ```
 
-The system prompt instructs the agent to:
+Il system prompt istruisce l'agente a:
 
-* Reference specific products and past interactions from the CRM data
-* Use retrieved product documents for accurate, up-to-date information
-* Adapt tone and length for each channel (formal for email, concise for SMS, conversational for WhatsApp)
+* Fare riferimento a prodotti specifici e interazioni passate dai dati CRM
+* Utilizzare i documenti di prodotto recuperati per informazioni accurate e aggiornate
+* Adattare tono e lunghezza per ogni canale (formale per email, conciso per SMS, conversazionale per WhatsApp)
 
-### 5. Channel routing: MessageChannel
+### 5. Instradamento canale: MessageChannel
 
-An [IF node](/integrations/builtin/core-nodes/n8n-nodes-base.if.md) routes the message based on `preferredChannel`:
+Un [nodo IF](/integrations/builtin/core-nodes/n8n-nodes-base.if.md) instrada il messaggio in base al campo `preferredChannel`:
 
-* **Email**: sends via an email API (for example, [SendGrid](/integrations/builtin/app-nodes/n8n-nodes-base.sendgrid.md), [Gmail](/integrations/builtin/app-nodes/n8n-nodes-base.gmail.md))
-* **WhatsApp**: sends via the WhatsApp Business API using an [HTTP Request node](/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/index.md)
-* **SMS**: sends via [Twilio](/integrations/builtin/app-nodes/n8n-nodes-base.twilio.md)
+* **Email**: invia tramite un'API email (ad esempio [SendGrid](/integrations/builtin/app-nodes/n8n-nodes-base.sendgrid.md), [Gmail](/integrations/builtin/app-nodes/n8n-nodes-base.gmail.md))
+* **WhatsApp**: invia tramite WhatsApp Business API usando un nodo [HTTP Request](/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/index.md)
+* **SMS**: invia tramite [Twilio](/integrations/builtin/app-nodes/n8n-nodes-base.twilio.md)
 
-### 6. CRM update: RecordFollowUpActivity
+### 6. Aggiornamento CRM: RecordFollowUpActivity
 
-A final [HTTP Request node](/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/index.md) posts the follow-up details back to your CRM, creating an activity record with the message sent, channel used, and timestamp.
+Un nodo [HTTP Request](/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/index.md) finale registra i dettagli del follow-up nel CRM, creando un record di attivita con il messaggio inviato, il canale utilizzato e il timestamp.
 
-## Prerequisites
+## Prerequisiti
 
-Before using this workflow, you need:
+Prima di utilizzare questo workflow, sono necessari:
 
-* **CRM API access**: API credentials for your CRM (for example, [Salesforce](/integrations/builtin/credentials/salesforce.md), [HubSpot](/integrations/builtin/credentials/hubspot.md), or any CRM with a REST API).
-* **Vector store with product data**: A populated vector store containing your product sheets, offers, and price lists. Refer to [RAG in n8n](/advanced-ai/rag-in-n8n.md).
-* **LLM credentials**: API key for your language model (for example, [OpenAI](/integrations/builtin/credentials/openai.md)).
-* **Channel credentials** (at least one):
-    * Email service API key (SendGrid, Gmail, etc.)
-    * WhatsApp Business API token
-    * Twilio account SID and auth token
+* **Accesso API al CRM**: credenziali API per il tuo CRM (ad esempio [Salesforce](/integrations/builtin/credentials/salesforce.md), [HubSpot](/integrations/builtin/credentials/hubspot.md) o qualsiasi CRM con API REST).
+* **Vector store con dati prodotto**: un vector store popolato con schede prodotto, offerte e listini. Consulta [RAG in n8n](/advanced-ai/rag-in-n8n.md).
+* **Credenziali LLM**: chiave API per il modello linguistico (ad esempio [OpenAI](/integrations/builtin/credentials/openai.md)).
+* **Credenziali canale** (almeno uno):
+    * Chiave API del servizio email (SendGrid, Gmail, ecc.)
+    * Token WhatsApp Business API
+    * Account SID e auth token di Twilio
 
-## Template variables
+## Variabili template
 
-Configure these credentials and variables in the workflow:
+Configura queste credenziali e variabili nel workflow:
 
-| Variable | Description |
+| Variabile | Descrizione |
 | --- | --- |
-| `CRM_API_BASE_URL` | Base URL for your CRM API |
-| `CRM_API_KEY` | API key or token for CRM authentication |
-| `WHATSAPP_API_TOKEN` | WhatsApp Business API bearer token |
-| `TWILIO_ACCOUNT_SID` | Twilio account SID for SMS |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token for SMS |
+| `CRM_API_BASE_URL` | URL base dell'API del CRM |
+| `CRM_API_KEY` | Chiave API o token per l'autenticazione al CRM |
+| `WHATSAPP_API_TOKEN` | Token bearer per WhatsApp Business API |
+| `TWILIO_ACCOUNT_SID` | Account SID di Twilio per gli SMS |
+| `TWILIO_AUTH_TOKEN` | Auth token di Twilio per gli SMS |
 
-## Using the example
+## Utilizzo dell'esempio
 
 --8<-- "_snippets/examples-color-key.md"

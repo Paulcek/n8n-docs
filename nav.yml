@@ -1338,7 +1338,7 @@ nav:
           - Let AI specify tool parameters: advanced-ai/examples/using-the-fromai-function.md
           - What is a vector database?: advanced-ai/examples/understand-vector-databases.md
           - Populate a Pinecone vector database from a website: advanced-ai/examples/vector-store-website.md
-          - Build a sales follow-up workflow with CRM and RAG: advanced-ai/examples/sales-followup-rag.md
+          - Creare un workflow di follow-up commerciale con CRM e RAG: advanced-ai/examples/sales-followup-rag.md
   - API:
       - api/index.md
       - Authentication: api/authentication.md
